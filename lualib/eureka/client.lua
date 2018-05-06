@@ -4,13 +4,14 @@ local setmetatable = setmetatable
 local tonumber = tonumber
 local byte = string.byte
 local type = type
+local null = ngx.null
 
 local ok, new_tab = pcall(require, "table.new")
 if not ok then
     new_tab = function (narr, nrec) return {} end
 end
 
-local _M = new_tab(0, 8)
+local _M = new_tab(0, 16)
 
 _M._VERSION = '0.0.1'
 
@@ -21,7 +22,7 @@ local useragent = 'ngx_lua-EurekaClient/v' .. _M._VERSION
 local function request(eurekaclient, method, path, query, body)
     local host = ('http://%s:%s'):format(
         eurekaclient.host,
-        eurekaclient.port,
+        eurekaclient.port
     )
     local path = eurekaclient.uri .. path
 
@@ -71,6 +72,100 @@ function _M.new(self, host, port, uri)
         uri = uri,
         httpc = httpc,
     }, mt)
+end
+
+function _M.getAllApps(self)
+    local res, err = request(self, 'GET', '/apps')
+    if not res then
+        return nil, err
+    end
+    if 200 ~= res.status then
+        return nil, ('status is %d : %s'):format(res.status, res.body)
+    else
+        return res.body
+    end
+end
+
+function _M.getApp(self, appid)
+    if not appid or 'string' ~= type(appid) or 1 > #appid then
+        return nil, 'appid required'
+    end
+    local res, err = request(self, 'GET', '/apps/' .. appid)
+    if not res then
+        return nil, err
+    end
+    if 200 ~= res.status then
+        return nil, ('status is %d : %s'):format(res.status, res.body)
+    else
+        return res.body
+    end
+end
+
+function _M.getAppInstance(self, appid, instanceid)
+    if not appid or 'string' ~= type(appid) or 1 > #appid then
+        return nil, 'appid required'
+    end
+    if not instanceid or 'string' ~= type(instanceid) or 1 > #instanceid then
+        return nil, 'instanceid required'
+    end
+    local res, err = request(self, 'GET', '/apps/' .. appid .. '/' .. instanceid)
+    if not res then
+        return nil, err
+    end
+    if 200 ~= res.status then
+        return nil, ('status is %d : %s'):format(res.status, res.body)
+    else
+        return res.body
+    end
+end
+
+function _M.getInstance(self, instanceid)
+    if not instanceid or 'string' ~= type(instanceid) or 1 > #instanceid then
+        return nil, 'instanceid required'
+    end
+    local res, err = request(self, 'GET', '/instances/' .. instanceid)
+    if not res then
+        return nil, err
+    end
+    if 200 ~= res.status then
+        return nil, ('status is %d : %s'):format(res.status, res.body)
+    else
+        return res.body
+    end
+end
+
+function _M.getInstanceByVipAddress(self, vipaddress)
+    if not vipaddress or 'string' ~= type(vipaddress) or 1 > #vipaddress then
+        return nil, 'vipaddress required'
+    end
+    local res, err = request(self, 'GET', '/vips/' .. vipaddress)
+    if not res then
+        return nil, err
+    end
+    if 200 == res.status then
+        return res.body
+    elseif 404 == res.status then
+        return null
+    else
+        return nil, ('status is %d : %s'):format(res.status, res.body)
+    end
+end
+
+function _M.getInstancesBySecureVipAddress(self, vipaddress)
+    if not vipaddress or 'string' ~= type(vipaddress) or 1 > #vipaddress then
+        return nil, 'vipaddress required'
+    end
+    local res, err = request(self, 'GET', '/svips/' .. vipaddress)
+    if not res then
+        return nil, err
+    end
+    if 200 == res.status then
+        return res.body
+    elseif 404 == res.status then
+        return null
+    else
+        return nil, ('status is %d : %s'):format(res.status, res.body)
+    end
 end
 
 return _M
