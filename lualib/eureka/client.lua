@@ -145,7 +145,7 @@ function _M.getInstanceByVipAddress(self, vipaddress)
     if 200 == res.status then
         return res.body
     elseif 404 == res.status then
-        return null
+        return null, res.body
     else
         return nil, ('status is %d : %s'):format(res.status, res.body)
     end
@@ -162,7 +162,94 @@ function _M.getInstancesBySecureVipAddress(self, vipaddress)
     if 200 == res.status then
         return res.body
     elseif 404 == res.status then
-        return null
+        return null, res.body
+    else
+        return nil, ('status is %d : %s'):format(res.status, res.body)
+    end
+end
+
+function _M.takeInstanceOut(self, appid, instanceid)
+    if not appid or 'string' ~= type(appid) or 1 > #appid then
+        return nil, 'appid required'
+    end
+    if not instanceid or 'string' ~= type(instanceid) or 1 > #instanceid then
+        return nil, 'instanceid required'
+    end
+    local res, err = request(self, 'PUT', '/apps/' .. appid .. '/' .. instanceid .. '/status', {
+        value = 'OUT_OF_SERVICE',
+    })
+    if not res then
+        return nil, err
+    end
+    if 200 == res.status then
+        return true, res.body
+    elseif 500 == res.status then
+        return null, res.body
+    else
+        return nil, ('status is %d : %s'):format(res.status, res.body)
+    end
+end
+
+function _M.putInstanceBack(self, appid, instanceid)
+    if not appid or 'string' ~= type(appid) or 1 > #appid then
+        return nil, 'appid required'
+    end
+    if not instanceid or 'string' ~= type(instanceid) or 1 > #instanceid then
+        return nil, 'instanceid required'
+    end
+    local res, err = request(self, 'PUT', '/apps/' .. appid .. '/' .. instanceid .. '/status', {
+        value = 'UP',
+    })
+    if not res then
+        return nil, err
+    end
+    if 200 == res.status then
+        return true, res.body
+    elseif 500 == res.status then
+        return null, res.body
+    else
+        return nil, ('status is %d : %s'):format(res.status, res.body)
+    end
+end
+
+function _M.heartBeat(self, appid, instanceid)
+    if not appid or 'string' ~= type(appid) or 1 > #appid then
+        return nil, 'appid required'
+    end
+    if not instanceid or 'string' ~= type(instanceid) or 1 > #instanceid then
+        return nil, 'instanceid required'
+    end
+    local res, err = request(self, 'PUT', '/apps/' .. appid .. '/' .. instanceid)
+    if not res then
+        return nil, err
+    end
+    if 200 == res.status then
+        return true, res.body
+    elseif 404 == res.status then
+        return null, res.body
+    else
+        return nil, ('status is %d : %s'):format(res.status, res.body)
+    end
+end
+
+function _M.updateAppInstanceMetadata(self, appid, instanceid, metadata)
+    if not appid or 'string' ~= type(appid) or 1 > #appid then
+        return nil, 'appid required'
+    end
+    if not instanceid or 'string' ~= type(instanceid) or 1 > #instanceid then
+        return nil, 'instanceid required'
+    end
+    if not metadata or 'table' ~= type(metadata) or 1> #metadata then
+        return nil, 'metadata required'
+    end
+    local res, err = request(self, 'PUT', '/apps/' .. appid .. '/' .. instanceid .. '/metadata', metadata)
+    if not res then
+        return nil, err
+    end
+    if 200 == res.status then
+        return true, res.body
+    elseif 500 == res.status then
+        return null, res.body
     else
         return nil, ('status is %d : %s'):format(res.status, res.body)
     end
