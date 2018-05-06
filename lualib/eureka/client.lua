@@ -79,10 +79,10 @@ function _M.getAllApps(self)
     if not res then
         return nil, err
     end
-    if 200 ~= res.status then
-        return nil, ('status is %d : %s'):format(res.status, res.body)
-    else
+    if 200 == res.status then
         return res.body
+    else
+        return nil, ('status is %d : %s'):format(res.status, res.body)
     end
 end
 
@@ -94,10 +94,10 @@ function _M.getApp(self, appid)
     if not res then
         return nil, err
     end
-    if 200 ~= res.status then
-        return nil, ('status is %d : %s'):format(res.status, res.body)
-    else
+    if 200 == res.status then
         return res.body
+    else
+        return nil, ('status is %d : %s'):format(res.status, res.body)
     end
 end
 
@@ -112,10 +112,10 @@ function _M.getAppInstance(self, appid, instanceid)
     if not res then
         return nil, err
     end
-    if 200 ~= res.status then
-        return nil, ('status is %d : %s'):format(res.status, res.body)
-    else
+    if 200 == res.status then
         return res.body
+    else
+        return nil, ('status is %d : %s'):format(res.status, res.body)
     end
 end
 
@@ -127,10 +127,10 @@ function _M.getInstance(self, instanceid)
     if not res then
         return nil, err
     end
-    if 200 ~= res.status then
-        return nil, ('status is %d : %s'):format(res.status, res.body)
-    else
+    if 200 == res.status then
         return res.body
+    else
+        return nil, ('status is %d : %s'):format(res.status, res.body)
     end
 end
 
@@ -190,28 +190,6 @@ function _M.takeInstanceOut(self, appid, instanceid)
     end
 end
 
-function _M.putInstanceBack(self, appid, instanceid)
-    if not appid or 'string' ~= type(appid) or 1 > #appid then
-        return nil, 'appid required'
-    end
-    if not instanceid or 'string' ~= type(instanceid) or 1 > #instanceid then
-        return nil, 'instanceid required'
-    end
-    local res, err = request(self, 'PUT', '/apps/' .. appid .. '/' .. instanceid .. '/status', {
-        value = 'UP',
-    })
-    if not res then
-        return nil, err
-    end
-    if 200 == res.status then
-        return true, res.body
-    elseif 500 == res.status then
-        return null, res.body
-    else
-        return nil, ('status is %d : %s'):format(res.status, res.body)
-    end
-end
-
 function _M.heartBeat(self, appid, instanceid)
     if not appid or 'string' ~= type(appid) or 1 > #appid then
         return nil, 'appid required'
@@ -253,6 +231,49 @@ function _M.updateAppInstanceMetadata(self, appid, instanceid, metadata)
     else
         return nil, ('status is %d : %s'):format(res.status, res.body)
     end
+end
+
+function _M.deRegister(self, appid, instanceid)
+    if not appid or 'string' ~= type(appid) or 1 > #appid then
+        return nil, 'appid required'
+    end
+    if not instanceid or 'string' ~= type(instanceid) or 1 > #instanceid then
+        return nil, 'instanceid required'
+    end
+    local res, err = request(self, 'DELETE', '/apps/' .. appid .. '/' .. instanceid)
+    if not res then
+        return nil, err
+    end
+    if 200 == res.status then
+        return true, res.body
+    else
+        return nil, ('status is %d : %s'):format(res.status, res.body)
+    end
+end
+
+function _M.putInstanceBack(self, appid, instanceid)
+    if not appid or 'string' ~= type(appid) or 1 > #appid then
+        return nil, 'appid required'
+    end
+    if not instanceid or 'string' ~= type(instanceid) or 1 > #instanceid then
+        return nil, 'instanceid required'
+    end
+    local res, err = request(self, 'DELETE', '/apps/' .. appid .. '/' .. instanceid .. '/status', {
+        value = 'UP',
+    })
+    if not res then
+        return nil, err
+    end
+    if 200 == res.status then
+        return true, res.body
+    elseif 500 == res.status then
+        return null, res.body
+    else
+        return nil, ('status is %d : %s'):format(res.status, res.body)
+    end
+end
+
+function _M.register(self, instancedata)
 end
 
 return _M
