@@ -41,8 +41,11 @@ local function request(eurekaclient, method, path, query, body)
     end
 
     local httpc = eurekaclient.httpc
+    if not httpc then
+        return nil, 'not initialized'
+    end
     return httpc:request_uri(host, {
-        version = '1.1',
+        version = 1.1,
         method = method,
         headers = headers,
         path = path,
@@ -274,7 +277,47 @@ function _M.putInstanceBack(self, appid, instanceid)
     end
 end
 
-function _M.register(self, instancedata)
+function _M.removeOverriddenStatus(self, appid, instanceid)
+    if not appid or 'string' ~= type(appid) or 1 > #appid then
+        return nil, 'appid required'
+    end
+    if not instanceid or 'string' ~= type(instanceid) or 1 > #instanceid then
+        return nil, 'instanceid required'
+    end
+    local res, err = request(self, 'DELETE', '/apps/' .. appid .. '/' .. instanceid .. '/status')
+    if not res then
+        return nil, err
+    end
+    if 200 == res.status then
+        return true, res.body
+    elseif 500 == res.status then
+        return null, res.body
+    else
+        return nil, ('status is %d : %s'):format(res.status, res.body)
+    end
+end
+
+function _M.register(self, appid, instancedata)
+    if not appid or 'string' ~= type(appid) or 1 > #appid then
+        return nil, 'appid required'
+    end
+    if not instancedata or 'table' ~= type(instancedata) or 1> #instancedata then
+        return nil, 'instancedata required'
+    end
+    local body, err = json.encode(instancedata)
+    if not body then
+        return nil, 'instancedata can not be convert to json : ' .. err
+    end
+    local res
+    res, err = request(self, 'POST', '/apps/' .. appid, nil, body)
+    if not res then
+        return nil, err
+    end
+    if 204 == res.status then
+        return true, res.body
+    else
+        return nil, ('status is %d : %s'):format(res.status, res.body)
+    end
 end
 
 return _M
