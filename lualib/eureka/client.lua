@@ -40,6 +40,7 @@ local function request(eurekaclient, method, path, query, body)
         headers['Content-Type'] = 'application/json'
     end
 
+    local httpc = eurekaclient.httpc
     return httpc:request_uri(host, {
         version = '1.1',
         method = method,
