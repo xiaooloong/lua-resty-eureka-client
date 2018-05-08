@@ -221,7 +221,7 @@ function _M.updateAppInstanceMetadata(self, appid, instanceid, metadata)
     if not instanceid or 'string' ~= type(instanceid) or 1 > #instanceid then
         return nil, 'instanceid required'
     end
-    if not metadata or 'table' ~= type(metadata) or 1> #metadata then
+    if not metadata or 'table' ~= type(metadata) then
         return nil, 'metadata required'
     end
     local res, err = request(self, 'PUT', '/apps/' .. appid .. '/' .. instanceid .. '/metadata', metadata)
@@ -301,7 +301,7 @@ function _M.register(self, appid, instancedata)
     if not appid or 'string' ~= type(appid) or 1 > #appid then
         return nil, 'appid required'
     end
-    if not instancedata or 'table' ~= type(instancedata) or 1> #instancedata then
+    if not instancedata or 'table' ~= type(instancedata) then
         return nil, 'instancedata required'
     end
     local body, err = json.encode(instancedata)
