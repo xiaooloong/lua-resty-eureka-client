@@ -1,56 +1,40 @@
 local client = require 'eureka.client'
 
-local instance = {
-    ['instance'] = {
-        ['instanceId'] = 'localhost:ngx-eureka-client:80',
-        ['hostName'] = 'localhost',
-        ['app'] = 'NGX-EUREKA-CLIENT',
-        ['ipAddr'] = '127.0.0.1',
-        ['port'] = {
-            ['$'] = 80,
-            ['@enabled'] = true,
-        },
-        ['securePort'] = {
-            ['$'] = 443,
-            ['@enabled'] = false
-        },
-        ['homePageUrl'] = 'http://127.0.0.1:80/ngx-eureka-client',
-        ['statusPageUrl'] = 'http://127.0.0.1:80/status',
-        ['healthCheckUrl'] = 'http://127.0.0.1:80/health-check',
-        ['vipAddress'] = 'ngx-eureka-client',
-        ['secureVipAddress'] = 'ngx-eureka-client',
-        ['metadata'] = {
-            ['language'] = 'ngx_lua',
-        },
-        ['dataCenterinfo'] = {
-            ['name'] = 'MyOwn',
-            ['@class'] = 'com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo',
-        },
-    },
-}
-
 local handler
-handler = function(premature, client, instance, param)
+handler = function(premature, eurekaclient, instance, timeval)
     if premature then
-        return client:deRegister(instance.instance.app, instance.instance.instanceId)
+        return eurekaclient:deRegister(instance.app, instance.instanceId)
     end
-    client:heartBeat(instance.instance.app, instance.instance.instanceId)
-    ngx.timer.at(param.timeval, handler, client, instance, param)
+    local ok, err = eurekaclient:heartBeat(instance.app, instance.instanceId)
+    if not ok or ngx.null == ok then
+        ngx.log(ngx.ALERT, ('failed to renew instance %s : %s'):format(instance.instanceId, err))
+    else
+        ngx.timer.at(timeval, handler, eurekaclient, instance, timeval)
+    end
 end
 
+local _M = {
+    ['_VERSION'] = '0.0.1'
+}
 
-local _M
+function _M.run(self, eurekaserver, instance)
+    instance.metadata.language = 'ngx_lua'
+    instance.dataCenterinfo = {
+        name = 'MyOwn',
+        ['@class'] = 'com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo',
+    }
+    instance.instanceId = ('%s:%s:%d'):format(instance.ipAddr, instance.app, ngx.worker.pid())
 
-_M._VERSION = '0.0.1'
-
-function _M.run(self, param)
-    local instance = instance
-    instance.instance.instanceId = instance.instance.instanceId .. ngx.worker.pid()
-    local client:new(param.host, param.port, param.uri)
-    client:register(instance.instance.app, instance)
-    ngx.timer.at(0, handler, client, instance, {
-        timeval = tonumber(param.timeval) or 5,
+    local eurekaclient = client:new(eurekaserver.host, eurekaserver.port, eurekaserver.uri)
+    local ok, err = eurekaclient:register(instance.app, {
+        instance = instance,
     })
+
+    if ok then
+        ngx.timer.at(0, handler, eurekaclient, instance, tonumber(param.timeval) or 5)
+    else
+        ngx.log(ngx.ALERT, ('failed to start eureka service at %s : %s'):format(instance.instanceId, err))
+    end
 end
 
 return _M
