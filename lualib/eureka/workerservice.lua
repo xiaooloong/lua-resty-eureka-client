@@ -45,7 +45,7 @@ function _M.run(self, _eurekaserver, _instance)
     timeval = tonumber(eurekaserver.timeval) or 5
 
     instance.metadata.language = 'ngx_lua'
-    instance.dataCenterinfo = {
+    instance.dataCenterInfo = {
         name = 'MyOwn',
         ['@class'] = 'com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo',
     }

@@ -33,7 +33,7 @@ local function request(eurekaclient, method, path, query, body)
 
     if body and 'table' == type(body) then
         local err
-        body, err = cjson.encode(body)
+        body, err = json.encode(body)
         if not body then
             return nil, 'invalid body : ' .. err
         end
@@ -304,12 +304,7 @@ function _M.register(self, appid, instancedata)
     if not instancedata or 'table' ~= type(instancedata) then
         return nil, 'instancedata required'
     end
-    local body, err = json.encode(instancedata)
-    if not body then
-        return nil, 'instancedata can not be convert to json : ' .. err
-    end
-    local res
-    res, err = request(self, 'POST', '/apps/' .. appid, nil, body)
+    local res, err = request(self, 'POST', '/apps/' .. appid, nil, instancedata)
     if not res then
         return nil, err
     end
