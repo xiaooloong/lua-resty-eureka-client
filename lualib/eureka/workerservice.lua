@@ -42,7 +42,7 @@ local _M = {
 function _M.run(self, _eurekaserver, _instance)
     instance = _instance
     eurekaserver = _eurekaserver
-    timeval = tonumber(eurekaserver.timeval) or 5
+    timeval = tonumber(eurekaserver.timeval) or 30
 
     instance.metadata.language = 'ngx_lua'
     instance.dataCenterInfo = {
