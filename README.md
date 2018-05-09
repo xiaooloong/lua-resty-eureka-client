@@ -5,17 +5,45 @@ is a [Netflix Eureka][3] client written for [OpenResty][1].
 Inspired by [PavelLoparev/php-eureka-client][2].
 
 ## Nginx Worker Service
-Using `eureka.workerservice` to register nginx itself to Eureka:
+
+Using `eureka.workerservice` to register nginx itself to Eureka
 
 ### workerservice:run(eurekaserver, instancedata)
 
 ```lua
+init_worker_by_lua_block {
+    (require 'eureka.workerservice'):run({
+        host = '127.0.0.1',     -- eureka server address
+        port = 8761,            -- eureka server port
+        uri  = '/eureka/v2',    -- eureka server context uri, like '/eureka' or '/'
+        timeval = 10,           -- heartbeat time interval in second, default value is 30s
+    },
+        instancedata            -- eureka instance data, see 'client:register(appid, instancedata)'
+    )
+}
 ```
 
 ## Client APIs
 
-### client:new(host, port, uri)
-### client:register(appid, instancedata)
+client:new(host, port, uri)
+---
+
+return the eureka client instance which uses eureka server at `http://{host}:{port}{uri}`, for example :
+
+```lua
+local eureka = require 'eureka.client'
+local client = eureka:new(  '127.0.0.1',    --if use a domain name, you should use 'resolver' directive in nginx.conf
+                            8761,           --port number
+                            '/eureka/v2')   --eureka server context uri, like '/eureka' or '/'
+```
+
+client:register(appid, instancedata)
+---
+
+register an instance to eureka server, `appid` is a string holding the name of your app,
+
+`instancedata` is a lua table conforms to this XSD:
+
 ```xsd
 <?xml version="1.0" encoding="UTF-8"?>
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
@@ -109,18 +137,80 @@ Using `eureka.workerservice` to register nginx itself to Eureka:
 </xsd:schema>
 ```
 
-### client:getAllApps()
-### client:getApp(appid)
-### client:getAppInstance(appid, instanceid)
-### client:getInstance(instanceid)
-### client:getInstanceByVipAddress(vipaddress)
-### client:getInstancesBySecureVipAddress(vipaddress)
-### client:takeInstanceOut(appid, instanceid)
-### client:heartBeat(appid, instanceid)
-### client:updateAppInstanceMetadata(appid, instanceid, metadata)
-### client:deRegister(appid, instanceid)
-### client:putInstanceBack(appid, instanceid)
-### client:removeOverriddenStatus(appid, instanceid)
+which is like :
+
+```lua
+local instancedata = {
+        ['instance'] = {
+            ['instanceId'] = ('%s:%s:%d'):format('127.0.0.1', 'NGX-EUREKA-CLIENT', ngx.worker.pid()),
+            ['hostName'] = 'localhost',
+            ['app'] = 'NGX-EUREKA-CLIENT',
+            ['ipAddr'] = '127.0.0.1',
+            ['vipAddress'] = 'ngx-eureka-client',
+            ['secureVipAddress'] = 'ngx-eureka-client',
+            ['status'] = 'UP',
+            ['port'] = {
+                ['$'] = 80,
+                ['@enabled'] = true,
+            },
+            ['securePort'] = {
+                ['$'] = 443,
+                ['@enabled'] = false
+            },
+            ['homePageUrl'] = 'http://localhost/',
+            ['statusPageUrl'] = 'http://localhost/status',
+            ['healthCheckUrl'] = 'http://localhost/check',
+            ['dataCenterInfo'] = {
+                ['name'] = 'MyOwn',
+                ['@class'] = 'com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo',
+            },
+            ['leaseInfo'] = {
+                ['evictionDurationInSecs'] = 60,
+            },
+            ['metadata'] = {
+                ['language'] = 'ngx_lua',
+            },
+        },
+    }
+```
+
+client:getAllApps()
+---
+
+
+client:getApp(appid)
+---
+
+client:getAppInstance(appid, instanceid)
+---
+
+client:getInstance(instanceid)
+---
+
+client:getInstanceByVipAddress(vipaddress)
+---
+
+client:getInstancesBySecureVipAddress(vipaddress)
+---
+
+client:takeInstanceOut(appid, instanceid)
+---
+
+client:heartBeat(appid, instanceid)
+---
+
+client:updateAppInstanceMetadata(appid, instanceid, metadata)
+---
+
+client:deRegister(appid, instanceid)
+---
+
+client:putInstanceBack(appid, instanceid)
+---
+
+client:removeOverriddenStatus(appid, instanceid)
+---
+
 
   [1]: http://openresty.org/
   [2]: https://github.com/PavelLoparev/php-eureka-client
