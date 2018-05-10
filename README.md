@@ -16,7 +16,7 @@ init_worker_by_lua_block {
         host = '127.0.0.1',     -- eureka server address
         port = 8761,            -- eureka server port
         uri  = '/eureka/v2',    -- eureka server context uri, like '/eureka' or '/'
-        timeval = 10,           -- heartbeat time interval in second, default value is 30s
+        timeval = 15,           -- heartbeat time interval in second, default value is 30s
     },
         instancedata            -- eureka instance data, see 'client:register(appid, instancedata)'
     )
@@ -25,22 +25,27 @@ init_worker_by_lua_block {
 
 ## Client APIs
 
-client:new(host, port, uri)
+`client:new(host, port, uri)`
 ---
 
 return the eureka client instance which uses eureka server at `http://{host}:{port}{uri}`, for example :
 
 ```lua
 local eureka = require 'eureka.client'
-local client = eureka:new(  '127.0.0.1',    --if use a domain name, you should use 'resolver' directive in nginx.conf
+local client， err = eureka:new(  '127.0.0.1',    --if use a domain name, you should use 'resolver' directive in nginx.conf
                             8761,           --port number
                             '/eureka/v2')   --eureka server context uri, like '/eureka' or '/'
+if not client then
+    print('failed to create eureka client instance : ' .. err)
+end
 ```
+
+In case of error, `nil` will be returned as well as a string describing the error
 
 client:register(appid, instancedata)
 ---
 
-register an instance to eureka server, `appid` is a string holding the name of your app,
+register new application instance to eureka server, `appid` is a string holding the name of your app
 
 `instancedata` is a lua table conforms to this XSD:
 
@@ -172,44 +177,163 @@ local instancedata = {
             },
         },
     }
+local ok, err = client:register(instancedata.instance.app, instancedata)
+
 ```
 
-client:getAllApps()
+in case of success, `true` will be returned
+
+in case of application or network error, `nil` will be returned as well as a string describing the error
+
+in case of eureka server error, `false` will be returned as well as a string describing the error
+
+`client:heartBeat(appid, instanceid)`
 ---
 
+send application instance heartbeat for `appid/instanceid`
 
-client:getApp(appid)
+in case of success, a json string will be returned
+
+in case of application or network error, `nil` will be returned as well as a string describing the error
+
+in case of eureka server error, `false` will be returned as well as a string describing the error
+
+if `instanceid` does not exist, `ngx.null` will be returned
+
+`client:deRegister(appid, instanceid)`
 ---
 
-client:getAppInstance(appid, instanceid)
+de-register application instance for `appid/instanceid`
+
+in case of success, `true` will be returned
+
+in case of application or network error, `nil` will be returned as well as a string describing the error
+
+in case of eureka server error, `false` will be returned as well as a string describing the error
+
+`client:getAllApps()`
 ---
 
-client:getInstance(instanceid)
+query for all instances registed in eureka server
+
+in case of success, a json string will be returned
+
+in case of application or network error, `nil` will be returned as well as a string describing the error
+
+in case of eureka server error, `false` will be returned as well as a string describing the error
+
+`client:getApp(appid)`
 ---
 
-client:getInstanceByVipAddress(vipaddress)
+query for all `appid` instances
+
+in case of success, a json string will be returned
+
+in case of application or network error, `nil` will be returned as well as a string describing the error
+
+in case of eureka server error, `false` will be returned as well as a string describing the error
+
+`client:getAppInstance(appid, instanceid)`
 ---
 
-client:getInstancesBySecureVipAddress(vipaddress)
+query for a specific `appid/instanceid`
+
+in case of success, a json string will be returned
+
+in case of application or network error, `nil` will be returned as well as a string describing the error
+
+in case of eureka server error, `false` will be returned as well as a string describing the error
+
+`client:getInstance(instanceid)`
 ---
 
-client:takeInstanceOut(appid, instanceid)
+query for a specific `instanceid`
+
+in case of success, a json string will be returned
+
+in case of application or network error, `nil` will be returned as well as a string describing the error
+
+in case of eureka server error, `false` will be returned as well as a string describing the error
+
+`client:getInstanceByVipAddress(vipaddress)`
 ---
 
-client:heartBeat(appid, instanceid)
+query for all instances under a particular `vipaddress`
+
+in case of success, a json string will be returned
+
+in case of application or network error, `nil` will be returned as well as a string describing the error
+
+in case of eureka server error, `false` will be returned as well as a string describing the error
+
+if `vipaddress` does not exist, `ngx.null` will be returned
+
+`client:getInstancesBySecureVipAddress(vipaddress)`
 ---
 
-client:updateAppInstanceMetadata(appid, instanceid, metadata)
+query for all instances under a particular secure `vipaddress`
+
+in case of success, a json string will be returned
+
+in case of application or network error, `nil` will be returned as well as a string describing the error
+
+in case of eureka server error, `false` will be returned as well as a string describing the error
+
+if `vipaddress` does not exist, `ngx.null` will be returned
+
+`client:takeInstanceOut(appid, instanceid)`
 ---
 
-client:deRegister(appid, instanceid)
+take instance out of service for `appid/instanceid`
+
+in case of success, a json string will be returned
+
+in case of failure, `ngx.null` will be returned
+
+in case of application or network error, `nil` will be returned as well as a string describing the error
+
+in case of eureka server error, `false` will be returned as well as a string describing the error
+
+`client:putInstanceBack(appid, instanceid)`
 ---
 
-client:putInstanceBack(appid, instanceid)
+move instance back into service for `appid/insanceid`
+
+in case of success, `true` will be returned
+
+in case of failure, `ngx.null` will be returned
+
+in case of application or network error, `nil` will be returned as well as a string describing the error
+
+in case of eureka server error, `false` will be returned as well as a string describing the error
+
+`client:removeOverriddenStatus(appid, instanceid)`
 ---
 
-client:removeOverriddenStatus(appid, instanceid)
+remove the `overriddenstatus` for `appid/instanceid`
+
+in case of success, `true` will be returned
+
+in case of failure, `ngx.null` will be returned
+
+in case of application or network error, `nil` will be returned as well as a string describing the error
+
+in case of eureka server error, `false` will be returned as well as a string describing the error
+
+`client:updateAppInstanceMetadata(appid, instanceid, metadata)`
 ---
+
+update metadata for `appid/instanceid`
+
+`instancedata` is a lua table holding key-value pairs to be set.
+
+in case of success, `true` will be returned
+
+in case of failure, `ngx.null` will be returned
+
+in case of application or network error, `nil` will be returned as well as a string describing the error
+
+in case of eureka server error, `false` will be returned as well as a string describing the error
 
 
   [1]: http://openresty.org/

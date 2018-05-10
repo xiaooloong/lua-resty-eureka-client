@@ -13,7 +13,7 @@ end
 
 local _M = new_tab(0, 16)
 
-_M._VERSION = '0.1.1'
+_M._VERSION = '0.1.2'
 
 local mt = { __index = _M }
 
@@ -86,7 +86,7 @@ function _M.getAllApps(self)
     if 200 == res.status then
         return res.body
     else
-        return nil, ('status is %d : %s'):format(res.status, res.body)
+        return false, ('status is %d : %s'):format(res.status, res.body)
     end
 end
 
@@ -101,7 +101,7 @@ function _M.getApp(self, appid)
     if 200 == res.status then
         return res.body
     else
-        return nil, ('status is %d : %s'):format(res.status, res.body)
+        return false, ('status is %d : %s'):format(res.status, res.body)
     end
 end
 
@@ -119,7 +119,7 @@ function _M.getAppInstance(self, appid, instanceid)
     if 200 == res.status then
         return res.body
     else
-        return nil, ('status is %d : %s'):format(res.status, res.body)
+        return false, ('status is %d : %s'):format(res.status, res.body)
     end
 end
 
@@ -134,7 +134,7 @@ function _M.getInstance(self, instanceid)
     if 200 == res.status then
         return res.body
     else
-        return nil, ('status is %d : %s'):format(res.status, res.body)
+        return false, ('status is %d : %s'):format(res.status, res.body)
     end
 end
 
@@ -151,7 +151,7 @@ function _M.getInstanceByVipAddress(self, vipaddress)
     elseif 404 == res.status then
         return null, res.body
     else
-        return nil, ('status is %d : %s'):format(res.status, res.body)
+        return false, ('status is %d : %s'):format(res.status, res.body)
     end
 end
 
@@ -168,7 +168,7 @@ function _M.getInstancesBySecureVipAddress(self, vipaddress)
     elseif 404 == res.status then
         return null, res.body
     else
-        return nil, ('status is %d : %s'):format(res.status, res.body)
+        return false, ('status is %d : %s'):format(res.status, res.body)
     end
 end
 
@@ -190,7 +190,7 @@ function _M.takeInstanceOut(self, appid, instanceid)
     elseif 500 == res.status then
         return null, res.body
     else
-        return nil, ('status is %d : %s'):format(res.status, res.body)
+        return false, ('status is %d : %s'):format(res.status, res.body)
     end
 end
 
@@ -210,7 +210,7 @@ function _M.heartBeat(self, appid, instanceid)
     elseif 404 == res.status then
         return null, res.body
     else
-        return nil, ('status is %d : %s'):format(res.status, res.body)
+        return false, ('status is %d : %s'):format(res.status, res.body)
     end
 end
 
@@ -233,7 +233,7 @@ function _M.updateAppInstanceMetadata(self, appid, instanceid, metadata)
     elseif 500 == res.status then
         return null, res.body
     else
-        return nil, ('status is %d : %s'):format(res.status, res.body)
+        return false, ('status is %d : %s'):format(res.status, res.body)
     end
 end
 
@@ -251,7 +251,7 @@ function _M.deRegister(self, appid, instanceid)
     if 200 == res.status then
         return true, res.body
     else
-        return nil, ('status is %d : %s'):format(res.status, res.body)
+        return false, ('status is %d : %s'):format(res.status, res.body)
     end
 end
 
@@ -273,7 +273,7 @@ function _M.putInstanceBack(self, appid, instanceid)
     elseif 500 == res.status then
         return null, res.body
     else
-        return nil, ('status is %d : %s'):format(res.status, res.body)
+        return false, ('status is %d : %s'):format(res.status, res.body)
     end
 end
 
@@ -293,7 +293,7 @@ function _M.removeOverriddenStatus(self, appid, instanceid)
     elseif 500 == res.status then
         return null, res.body
     else
-        return nil, ('status is %d : %s'):format(res.status, res.body)
+        return false, ('status is %d : %s'):format(res.status, res.body)
     end
 end
 
@@ -311,7 +311,7 @@ function _M.register(self, appid, instancedata)
     if 204 == res.status then
         return true, res.body
     else
-        return nil, ('status is %d : %s'):format(res.status, res.body)
+        return false, ('status is %d : %s'):format(res.status, res.body)
     end
 end
 
