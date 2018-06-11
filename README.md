@@ -17,6 +17,10 @@ init_worker_by_lua_block {
         port = 8761,            -- eureka server port
         uri  = '/eureka/v2',    -- eureka server context uri, like '/eureka' or '/'
         timeval = 15,           -- heartbeat time interval in second, default value is 30s
+        auth = {                -- optional, use it if your eureka server require http basic auth :)
+            username = '',
+            password = '',
+        },
     },
         instancedata            -- eureka instance data, see 'InstanceData Builder'
     )
@@ -32,9 +36,13 @@ return the eureka client instance which uses eureka server at `http://{host}:{po
 ```lua
 local eureka = require 'eureka.client'
 local client， err = eureka:new(
-                            '127.0.0.1',    --add 'resolver' directive in nginx.conf if using domainname
-                            8761,           --port number
-                            '/eureka/v2'    --eureka server context uri, like '/eureka' or '/'
+                                '127.0.0.1',    -- add 'resolver' directive in nginx.conf if using domainname
+                                8761,           -- port number
+                                '/eureka/v2',   -- eureka server context uri, like '/eureka' or '/'
+                                {               -- optional, use it if your eureka server require http basic auth :)
+                                    username = '',
+                                    password = '',
+                                }
                             )
 if not client then
     print('failed to create eureka client instance : ' .. err)

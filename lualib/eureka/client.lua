@@ -5,6 +5,7 @@ local tonumber = tonumber
 local byte = string.byte
 local type = type
 local null = ngx.null
+local base64 = ngx.encode_base64
 
 local ok, new_tab = pcall(require, "table.new")
 if not ok then
@@ -26,10 +27,15 @@ local function request(eurekaclient, method, path, query, body)
     )
     local path = eurekaclient.uri .. path
 
-    local headers = new_tab(0, 4)
+    local headers = new_tab(0, 5)
     headers['User-Agent'] = useragent
     headers['Connection'] = 'Keep-Alive'
     headers['Accept'] = 'application/json'
+
+    local auth = eurekaclient.auth
+    if auth then
+        headers['Authorization'] = auth
+    end
 
     if body and 'table' == type(body) then
         local err
@@ -54,7 +60,7 @@ local function request(eurekaclient, method, path, query, body)
     })
 end
 
-function _M.new(self, host, port, uri)
+function _M.new(self, host, port, uri, auth)
     if not host or 'string' ~= type(host) or 1 > #host then
         return nil, 'host required'
     end
@@ -66,6 +72,15 @@ function _M.new(self, host, port, uri)
     if 'string' ~= type(uri) or byte(uri) ~= 47 then -- '/'
         return nil, 'wrong uri prefix'
     end
+    local _auth
+    if auth and 'table' == type(auth) and auth.username and auth.password then
+        _auth = ('Basic %s'):format(
+            base64(('%s:%s'):format(
+                auth.username,
+                auth.password
+            ))
+        )
+    end
     local httpc, err = http.new()
     if not httpc then
         return nil, 'failed to init http client instance : ' .. err
@@ -74,6 +89,7 @@ function _M.new(self, host, port, uri)
         host = host,
         port = port,
         uri = uri,
+        auth = _auth,
         httpc = httpc,
     }, mt)
 end

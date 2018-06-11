@@ -9,7 +9,7 @@ _register = function(premature)
         return
     end
     local err
-    eurekaclient, err = client:new(eurekaserver.host, eurekaserver.port, eurekaserver.uri)
+    eurekaclient, err = client:new(eurekaserver.host, eurekaserver.port, eurekaserver.uri, eurekaserver.auth)
     if not eurekaclient then
         ngx.log(ngx.ALERT, ('can not create client instance %s : %s'):format(instance.instance.instanceId, err))
     else
