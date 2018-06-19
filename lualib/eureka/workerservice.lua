@@ -34,7 +34,7 @@ _renew = function(premature)
 end
 
 local _M = {
-    ['_VERSION'] = '0.1.1'
+    ['_VERSION'] = '0.3.1'
 }
 
 function _M.run(self, _eurekaserver, _instance)
